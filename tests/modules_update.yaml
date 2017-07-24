@@ -1,0 +1,13 @@
+- block:
+ 
+    - name: get list of installed modules to update
+      raw: docker exec boltron_container bash -l -c "dnf module list --installed| sed -e '1,/Name/d' | grep -Eo '^[^ ]+'"
+      register: all_modules_list
+ 
+    - name: update all installed modules
+      raw: docker exec boltron_container bash -l -c "dnf module update '{{ item }}' -y"
+      with_items: "{{ all_modules_list.stdout_lines }}"
+      when: '"UTF-8" not in item'
+
+  ignore_errors: yes
+  tags: tests, module_install

@@ -1,0 +1,19 @@
+- block:
+
+  - name: install dnf
+    raw: "docker exec '{{ container_name }}' bash -l -c 'microdnf install -y dnf'"
+
+  - name: reinstall dnf BZ github.com/rpm-software-management/microdnf/issues/7
+    raw: "docker exec '{{ container_name }}' bash -l -c 'microdnf install -y dnf'"
+
+  - name: check amount of modules, expect 25
+    raw: docker exec '{{ container_name }}' bash -l -c 'if [ "$(dnf module list | sed -e '1,/Name/d' |wc -l)" -ne 25 ]; then exit 1; fi'
+
+  - name: install httpd
+    raw: "docker exec '{{ container_name }}' bash -l -c 'dnf install -y httpd'"
+
+  - name: install systemtools group
+    raw: "docker exec '{{ container_name }}' bash -l -c 'dnf install -y @systemtools'"
+
+  ignore_errors: yes
+  tags: tests
