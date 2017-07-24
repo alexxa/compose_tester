@@ -1,0 +1,92 @@
+# This is a playbook to 
+#  - configure Vagrant environment, 
+#  - build docker image within a given compose url,
+#  - run a set of tests
+
+- name:  Vagrant installation
+  hosts: localhost
+  connection: local
+  become: yes
+  become_method: sudo
+  tasks:
+
+    - name: install vagrant
+      package:
+        name: vagrant
+        state: present
+
+    - name: install vagrant-libvirt
+      package:
+        name: vagrant-libvirt
+        state: present
+
+    - name: start libvirtd service
+      service:
+        name: libvirtd
+        state: started
+    
+    - name: provision vagrant evironment, it can take 5-10 minutes
+      command: vagrant up --provider=libvirt
+
+    - name: get vagrant machine hostname
+      shell: vagrant ssh-config --host vagrant_module_builder | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b"
+      register: vagrant_hostname
+      tags: tests
+
+    - name: check vagrant key permissions
+      command: chmod 700 ./data/insecure_private_key
+
+    - name: collect VM data for ansible
+      add_host:
+        hostname: "{{ vagrant_hostname['stdout'] }}"
+        groups: vagrant_host
+        ansible_connection: ssh
+        ansible_become: True
+        ansible_ssh_private_key_file: ./data/insecure_private_key
+        compose: "{{ compose|mandatory }}"
+      tags: tests
+
+- name: Compose build and validation
+  hosts: vagrant_host
+  user: vagrant
+  become: yes
+  become_method: sudo
+  vars:
+    container_name: "boltron_container"
+  tasks:
+    
+    - name: copy boltron.cfg in /etc/mock
+      command: cp /vagrant/data/boltron.cfg /etc/mock
+    
+    - name: build an image
+      shell: /vagrant/data/build-image.sh "{{ compose }}"
+      #abort play if the image can't be build for some reason
+      when: '"https" in "{{ compose }}"'
+      ignore_errors: false
+
+    - name: pull a docker image
+      command: docker pull "{{ compose }}"
+      when: '"registry" in "{{ compose }}"'
+      ignore_errors: false
+
+    - name: rename docker image if pulled
+      command: docker tag "{{ compose }}":latest boltron:latest
+      when: '"registry" in "{{ compose }}"'
+    
+    - name: install python-docker-py to use docker_container
+      package:
+        name: python-docker-py
+        state: latest
+
+    - name: create a data container
+      docker_container:
+        name: "{{ container_name }}"
+        image: boltron
+        state: started
+        volumes:
+           - /vagrant/run-tests.sh:/run-tests.sh:z
+        command: sleep infinity
+
+    - import_tasks: tests/quick_mini_test.yaml
+    - import_tasks: tests/modules_install.yaml
+    - import_tasks: tests/modules_update.yaml
