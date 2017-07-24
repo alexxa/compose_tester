@@ -6,24 +6,31 @@
 - name:  Vagrant installation
   hosts: localhost
   connection: local
-  become: yes
-  become_method: sudo
+  #running the whole playbook as root made vagrant want to run as root, 
+  #   which was causing me no end of problems
+  
   tasks:
 
     - name: install vagrant
       package:
         name: vagrant
         state: present
+      become: yes
+      become_method: sudo
 
     - name: install vagrant-libvirt
       package:
         name: vagrant-libvirt
         state: present
+      become: yes
+      become_method: sudo
 
     - name: start libvirtd service
       service:
         name: libvirtd
         state: started
+      become: yes
+      become_method: sudo
     
     - name: provision vagrant evironment, it can take 5-10 minutes
       command: vagrant up --provider=libvirt
@@ -87,6 +94,6 @@
            - /vagrant/run-tests.sh:/run-tests.sh:z
         command: sleep infinity
 
-    - import_tasks: tests/quick_mini_test.yaml
-    - import_tasks: tests/modules_install.yaml
-    - import_tasks: tests/modules_update.yaml
+    - include: tests/quick_mini_test.yaml
+    - include: tests/modules_install.yaml
+    - include: tests/modules_update.yaml

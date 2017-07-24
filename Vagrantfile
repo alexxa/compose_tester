@@ -2,13 +2,13 @@ Vagrant.configure(2) do |config|
   config.vm.box = "fedora/26-cloud-base"
   config.ssh.insert_key = false
   config.vm.hostname = "fvagrant"
-  config.vm.define :vagrant_module_builder do |vagrant_host|
+  config.vm.define :vagrant_module_tester do |vagrant_host|
     vagrant_host.vm.provider :libvirt do |domain|
       #domain.cpus = 1
       #domain.memory = 16384
       domain.memory = 1024
       domain.nested = true
-      domain.cpu_mode = "host-model"
+      #domain.cpu_mode = "host-model" #having this flag set makes the vm not launch for me --langdon
     end
 
     vagrant_host.vm.provision "shell", inline: "sudo dnf -y update"
