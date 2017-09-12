@@ -6,8 +6,8 @@
 - name:  Vagrant installation
   hosts: localhost
   connection: local
-  #become: yes
-  #become_method: sudo
+  become: yes
+  become_method: sudo
   tasks:
 
     - name: install vagrant
