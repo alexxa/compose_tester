@@ -87,6 +87,6 @@
            - /vagrant/run-tests.sh:/run-tests.sh:z
         command: sleep infinity
 
-    - import_tasks: tests/quick_mini_test.yaml
-    - import_tasks: tests/modules_install.yaml
-    - import_tasks: tests/modules_update.yaml
+    - include: tests/quick_mini_test.yaml
+    - include: tests/modules_install.yaml
+    - include: tests/modules_update.yaml
