@@ -34,7 +34,7 @@
       tags: tests
 
     - name: check vagrant key permissions
-      command: chmod 700 ./data/insecure_private_key
+      command: chmod 766 ./data/insecure_private_key
 
     - name: collect VM data for ansible
       add_host:
