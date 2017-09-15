@@ -11,7 +11,7 @@ inside a docker container.
 This playbook tests only a few selected modules.
 * `data/`: Data files
     - `data/boltron.cfg`: The Boltron compose configuration file.
-    - `data/build-image.cfg`: A bash script to create a docker image. To be replaced with Ansible playbook. See Issue #2.
+    - `data/build-image.sh`: A bash script to create a docker image. To be replaced with an Ansible playbook. See Issue #2.
     - `data/insecure_private_key`: A key to ssh connect to the Vagrant machine.
 * `Vagrantfile`: A file to provision the Vagrant machine. Most of it will be replaced with Ansilbe playbook. See Issue #1.
 
@@ -27,7 +27,7 @@ Usage
 * Navigate there
 * As a sudo user run:
 ```
-ansible-playbook deploy.yaml  --extra-vars "compose=LINK/TO/TESTED/COMPOSE"
+ansible-playbook deploy.yaml  --extra-vars "compose=LINK/TO/COMPOSE/TO/TEST"
 ```
 
 __Mind the mandatory extra variable `compose`__ It can be a koji url link or a name of the container, e.g: 
