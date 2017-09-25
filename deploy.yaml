@@ -25,13 +25,13 @@
         state: started
 
     - name: pull a docker image
-      command: docker pull "{{ compose }}"
-      when: '"registry" in "{{ compose }}"'
+      command: docker load "{{ compose }}"
+      #when: '"registry" in "{{ compose }}"'
       ignore_errors: false
 
     - name: rename docker image if pulled
       command: docker tag "{{ compose }}":latest boltron:latest
-      when: '"registry" in "{{ compose }}"'
+      #when: '"registry" in "{{ compose }}"'
 
     - name: install python-docker-py to use docker_container
       package:
@@ -44,8 +44,8 @@
         name: "{{ container_name }}"
         image: boltron
         state: started
-        volumes:
-           - /vagrant/run-tests.sh:/run-tests.sh:z
+        #volumes:
+        #   - /vagrant/run-tests.sh:/run-tests.sh:z
         command: sleep infinity
 
     - include: tests/quick_mini_test.yaml
