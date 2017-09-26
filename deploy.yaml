@@ -16,7 +16,6 @@
     - name: install docker
       package:
         name: docker
-        enablerepo: "*"
         state: present
 
     - name: start docker service
@@ -36,7 +35,6 @@
     - name: install python-docker-py to use docker_container
       package:
         name: python-docker-py
-        enablerepo: "*"
         state: latest
 
     - name: create a data container
