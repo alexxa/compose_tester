@@ -80,4 +80,4 @@
             git_repo: compose_tester
             ci_project: fedora-qa
             ci_cmd: 'yum -y install ansible && ansible-playbook deploy.yaml  --extra-vars "compose=jamesantill/boltron-27"'
-            timeout: '20m'
+            timeout: '120m'
