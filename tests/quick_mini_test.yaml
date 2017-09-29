@@ -12,8 +12,5 @@
   - name: install httpd
     raw: "docker exec '{{ container_name }}' bash -l -c 'dnf install -y httpd'"
 
-  - name: install systemtools group
-    raw: "docker exec '{{ container_name }}' bash -l -c 'dnf install -y @systemtools'"
-
   ignore_errors: yes
-  tags: tests
+  tags: tests, mini

@@ -1,11 +1,11 @@
 - block:
 
     - name: get list of all modules to install
-      raw: docker exec boltron_container bash -l -c "dnf module list | sed -e '1,/Name/d' | grep -Eo '^[^ ]+'"
+      raw: docker exec "{{ container_name }}" bash -l -c "dnf module list | sed -e '1,/Name/d' | grep -Eo '^[^ ]+'"
       register: all_modules_list 
 
     - name: install all modules
-      raw: docker exec boltron_container bash -l -c "dnf module install '{{ item }}' -y"
+      raw: docker exec "{{ container_name }}" bash -l -c "dnf module install '{{ item }}' -y"
       with_items: "{{ all_modules_list.stdout_lines }}"
       when: ("PYTHONCOERCECLOCALE" not in item) or ("dnf" not in item)
 

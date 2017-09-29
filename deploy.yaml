@@ -9,7 +9,7 @@
   become: yes
   become_method: sudo
   vars:
-    container_name: "boltron_container"
+    container_name: "bikeshed_container"
     compose: "{{ compose|mandatory }}"
   tasks:
 
@@ -17,34 +17,36 @@
       package:
         name: docker
         state: present
+      tags: env_setup
 
     - name: start docker service
       service:
         name: docker
         state: started
-
-    - name: pull a docker image
-      command: docker load "{{ compose }}"
-      #when: '"registry" in "{{ compose }}"'
-      ignore_errors: false
-
-    - name: rename docker image if pulled
-      command: docker tag "{{ compose }}":latest boltron:latest
-      #when: '"registry" in "{{ compose }}"'
+      tags: env_setup
 
     - name: install python-docker-py to use docker_container
       package:
         name: python-docker-py
         state: latest
+      tags: env_setup
+
+    - name: pull a docker image
+      command: docker pull "{{ compose }}"
+      ignore_errors: false
+      tags: pull_image
+
+    - name: rename docker image if pulled
+      command: docker tag "{{ compose }}":latest bikeshed:latest
+      tags: pull_image
 
     - name: create a data container
       docker_container:
         name: "{{ container_name }}"
-        image: boltron
+        image: bikeshed
         state: started
-        #volumes:
-        #   - /vagrant/run-tests.sh:/run-tests.sh:z
         command: sleep infinity
+      tags: create_container
 
     - include: tests/quick_mini_test.yaml
     - include: tests/modules_install.yaml
