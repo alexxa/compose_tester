@@ -66,6 +66,11 @@ node('fedora-qa'){
             ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_update >> output.log'''
         }
 
+
+        stage('check pwd and ls') {
+            onmyduffynode '''pwd && ls -la'''
+        }
+
         stage('Create Errors Log') {
             onmyduffynode '''cd compose_tester &&
             sed -n '/^TASK/{ x; /failed:/p; d; }; /failed:/H; ${ x; /failed:/p; }' output.log >> error.log'''

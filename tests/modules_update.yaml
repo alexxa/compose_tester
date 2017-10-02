@@ -10,4 +10,4 @@
       when: '"UTF-8" not in item'
 
   ignore_errors: yes
-  tags: tests, module_install
+  tags: tests, modules_update
