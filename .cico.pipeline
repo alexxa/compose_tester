@@ -6,6 +6,15 @@ def onmyduffynode(script){
     }
 }
 
+def syncfromduffynode(rsyncpath){
+    sh 'rsync -e "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -l root " -Ha --include=' +  rsyncpath +  " ${DUFFY_NODE}.ci.centos.org:~/ ./"
+}
+
+def notifyBuild(String buildStatus = 'STARTED') {
+    buildStatus =  buildStatus ?: 'SUCCESSFUL'
+    emailext attachmentsPattern: 'compose_tester/*.log', body: "See: ${env.BUILD_URL}", subject: "[${env.JOB_NAME}] Build #${env.BUILD_NUMBER}: ${buildStatus}", to: 'igulina@redhat.com, rhel-next-modularity-internal@redhat.com'
+}
+
 node('fedora-qa'){
 
     stage('Allocate Node'){
@@ -53,35 +62,43 @@ node('fedora-qa'){
 
         stage('Mini test') {
             onmyduffynode '''cd compose_tester &&
-            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags mini > output.log'''
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags mini | tee output.log'''
         }
 
         stage('Module Install') {
             onmyduffynode '''cd compose_tester &&
-            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_install >> output.log'''
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_install | tee -a output.log'''
         }
 
         stage('Module Update') {
             onmyduffynode '''cd compose_tester &&
-            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_update >> output.log'''
-        }
-
-
-        stage('check pwd and ls') {
-            onmyduffynode '''pwd && ls -la'''
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_update | tee -a output.log'''
         }
 
         stage('Create Errors Log') {
             onmyduffynode '''cd compose_tester &&
-            sed -n '/^TASK/{ x; /failed:/p; d; }; /failed:/H; ${ x; /failed:/p; }' output.log >> error.log'''
+            sed -n \'/^TASK/{ x; /failed:/p; d; }; /failed:/H; \\${ x; /failed:/p; }\' output.log >> error.log'''
         }
 
-
     }catch (e){
+        currentBuild.result = "FAILED"
         throw e 
     } finally {
-        stage('Deallocate Node'){
-            sh 'cico node done ${SSID}'
+        try {
+            stage('Archive the Logs'){
+                syncfromduffynode('*.log')
+                archiveArtifacts('compose_tester/*.log')
+            }
+        } catch (e){
+            currentBuild.result = "FAILED"
+            throw e
+        } finally {
+            stage('Deallocate Node'){
+                sh 'cico node done ${SSID}'
+            }
+            stage('Notify Recipients'){
+                notifyBuild(currentBuild.result)
+            }
         }
     }
 }
