@@ -53,18 +53,24 @@ node('fedora-qa'){
 
         stage('Mini test') {
             onmyduffynode '''cd compose_tester &&
-            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags mini'''
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags mini > output.log'''
         }
 
         stage('Module Install') {
             onmyduffynode '''cd compose_tester &&
-            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_install'''
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_install >> output.log'''
         }
 
         stage('Module Update') {
             onmyduffynode '''cd compose_tester &&
-            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_update'''
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_update >> output.log'''
         }
+
+        stage('Create Errors Log') {
+            onmyduffynode '''cd compose_tester &&
+            sed -n '/^TASK/{ x; /failed:/p; d; }; /failed:/H; ${ x; /failed:/p; }' output.log >> error.log'''
+        }
+
 
     }catch (e){
         throw e 
