@@ -1,46 +1,76 @@
-node {
-    deleteDir()
-    stage('Build') {
+def onmyduffynode(script){
+    ansiColor('xterm'){
+        timestamps{
+            sh 'ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -l root ${DUFFY_NODE}.ci.centos.org -t "' + script + '"'
+        }
+    }
+}
+
+node('fedora-qa'){
+
+    stage('Allocate Node'){
+        env.CICO_API_KEY = readFile("${env.HOME}/duffy.key").trim()
+        duffy_rtn=sh(
+            script: 'cico --debug node get -f value -c hostname -c comment',
+            returnStdout: true
+            ).trim().tokenize(' ')
+        env.DUFFY_NODE=duffy_rtn[0]
+        env.SSID=duffy_rtn[1]
+    }
+
+    try{
+        stage('Pre Setup Node'){
+            onmyduffynode 'yum -y install git ansible'
+        }
+
+        stage('Build') {
 
         //sh '''curl -sb -H "Accept: application/json" "https://kojipkgs.fedoraproject.org/compose/latest-Fedora-Modular-26/STATUS" | grep FINISHED'''
         //def response = httpRequest 'https://kojipkgs.fedoraproject.org/compose/latest-Fedora-Modular-26/STATUS'
         //println("Content: "+response.content)
         //assert response.content == "FINISHED\n": "The Build status is not FINISHED, aborting."
 
-    }
+        }
 
-    stage('git clone Tests') {
+        stage('git clone Tests') {
+            onmyduffynode '''git clone "https://github.com/alexxa/compose_tester.git" && ls -la'''
+        }
 
-        sh '''git clone "https://github.com/alexxa/compose_tester.git" && ls -la'''
-    }
+        stage('Setup Environment') {
+            onmyduffynode '''cd compose_tester &&
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags env_setup'''
+        }
 
-    stage('Setup Environment') {
-        sh '''cd /var/lib/jenkins/workspace/F27_james_image/compose_tester &&
-        sudo ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags env_setup'''
-    }
+        stage('Pull Image') {
+            onmyduffynode '''cd compose_tester &&
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags pull_image'''
+        }
 
-    stage('Pull Image') {
-        sh '''cd /var/lib/jenkins/workspace/F27_james_image/compose_tester &&
-        sudo ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags pull_image'''
-    }
+        stage('Create Container') {
+            onmyduffynode '''cd compose_tester &&
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags create_container'''
+        }
 
-    stage('Create Container') {
-        sh '''cd /var/lib/jenkins/workspace/F27_james_image/compose_tester &&
-        sudo ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags create_container'''
-    }
+        stage('Mini test') {
+            onmyduffynode '''cd compose_tester &&
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags mini'''
+        }
 
-    stage('Mini test') {
-        sh '''cd /var/lib/jenkins/workspace/F27_james_image/compose_tester &&
-        sudo ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags mini'''
-    }
+        stage('Module Install') {
+            onmyduffynode '''cd compose_tester &&
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_install'''
+        }
 
-    stage('Module Install') {
-        sh '''cd /var/lib/jenkins/workspace/F27_james_image/compose_tester &&
-        sudo ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_install'''
-    }
+        stage('Module Update') {
+            onmyduffynode '''cd compose_tester &&
+            ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_update'''
+        }
 
-    stage('Module Update') {
-        sh '''cd /var/lib/jenkins/workspace/F27_james_image/compose_tester &&
-        sudo ansible-playbook deploy.yaml --extra-vars "compose=jamesantill/boltron-27" --tags modules_update'''
+    }catch (e){
+        throw e 
+    } finally {
+        stage('Deallocate Node'){
+            sh 'cico node done ${SSID}'
+        }
     }
 }
