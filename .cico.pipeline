@@ -12,7 +12,7 @@ def syncfromduffynode(rsyncpath){
 
 def notifyBuild(String buildStatus = 'STARTED') {
     buildStatus =  buildStatus ?: 'SUCCESSFUL'
-    emailext attachmentsPattern: 'compose_tester/*.log', body: "See: ${env.BUILD_URL}", subject: "[${env.JOB_NAME}] Build #${env.BUILD_NUMBER}: ${buildStatus}", to: 'igulina@redhat.com, rhel-next-modularity-internal@redhat.com'
+    emailext attachmentsPattern: 'compose_tester/*.log', body: "See: ${env.BUILD_URL}", subject: "[${env.JOB_NAME}] Build #${env.BUILD_NUMBER}: ${buildStatus}", to: 'igulina@redhat.com'
 }
 
 node('fedora-qa'){
