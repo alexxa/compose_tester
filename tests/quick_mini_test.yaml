@@ -7,10 +7,10 @@
     raw: "docker exec '{{ container_name }}' bash -l -c 'microdnf install -y dnf'"
 
   - name: check amount of modules, expect 25
-    raw: docker exec '{{ container_name }}' bash -l -c 'if [ "$(dnf module list | sed -e '1,/Name/d' |wc -l)" -ne 25 ]; then exit 1; fi'
+    raw: docker exec '{{ container_name }}' bash -l -c 'if [ "$(dnf module list | sed -e '1,/Name/d' |wc -l)" -ne 35 ]; then exit 1; fi'
 
-  - name: install httpd
-    raw: "docker exec '{{ container_name }}' bash -l -c 'dnf install -y httpd'"
+    #- name: install httpd
+    #raw: "docker exec '{{ container_name }}' bash -l -c 'dnf install -y httpd'"
 
   ignore_errors: yes
   tags: tests, mini

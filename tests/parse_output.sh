@@ -1,13 +1,8 @@
 #!/bin/bash
 
-full_output
-installed_modules='../installed_modules.txt'
+installed_modules='installed_modules.log'
 failed_modules='error.log'
 failed_modules_amount=$(cat $failed_modules | wc -l)
-
-#module = ''
-#installed_modules =  $(sudo docker exec bikeshed_container bash -l -c 'dnf module list --installed')
-#failed_modules = $(grep -e 'item=[a-zA-Z0-9-]*' newimage.log | grep -P 'Error.{60}')
 
 while IFS='' read -r line || [[ -n "$line" ]]; do
 	if $(grep -q "$line" "$installed_modules"); then

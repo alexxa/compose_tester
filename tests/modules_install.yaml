@@ -10,5 +10,8 @@
       with_lines: cat tests/f27_modules.yaml
       when: ("PYTHONCOERCECLOCALE" not in item) or ("dnf" not in item)
 
+    - name: log installed modules
+      raw: docker exec "{{ container_name }}" bash -l -c "dnf module list --installed" >> installed_modules.log
+
   ignore_errors: yes
   tags: tests, modules_install
