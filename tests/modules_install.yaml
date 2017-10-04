@@ -6,7 +6,8 @@
 
     - name: install all modules
       raw: docker exec "{{ container_name }}" bash -l -c "dnf module install '{{ item }}' -y"
-      with_items: "{{ all_modules_list.stdout_lines }}"
+      #with_items: "{{ all_modules_list.stdout_lines }}"
+      with_lines: cat tests/f27_modules.yaml
       when: ("PYTHONCOERCECLOCALE" not in item) or ("dnf" not in item)
 
   ignore_errors: yes
